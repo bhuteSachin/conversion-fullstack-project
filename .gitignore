@@ -1,0 +1,15 @@
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Java build output
+server-java/target/
+
+# Frontend dependencies and build output
+client/node_modules/
+client/dist/
+
+# Logs
+*.log
