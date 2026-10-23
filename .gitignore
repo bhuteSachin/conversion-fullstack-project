@@ -19,11 +19,12 @@ client/dist/
 .idea/
 
 # Terraform generated files
-**/.terraform/*
+**/.terraform/
 *.tfstate
 *.tfstate.*
 crash.log
 crash.*.log
+*.tfplan
 
 # Terraform sensitive variable files
 *.tfvars
