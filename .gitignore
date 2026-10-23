@@ -18,9 +18,16 @@ client/dist/
 .vscode/
 .idea/
 
-.terraform/
+# Terraform generated files
+**/.terraform/*
 *.tfstate
 *.tfstate.*
-.terraform.lock.hcl
-*.tfvars
+crash.log
+crash.*.log
 
+# Terraform sensitive variable files
+*.tfvars
+*.tfvars.json
+
+# Node.js
+# node_modules/
