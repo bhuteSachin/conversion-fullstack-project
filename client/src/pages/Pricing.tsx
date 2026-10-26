@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Crown, Loader2, X, QrCode, CreditCard } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-// Declare Razorpay type for TypeScript
-declare global {
-    interface Window {
-        Razorpay: any;
-    }
-}
+import { getApiErrorMessage } from '../utils/apiError';
 
 const PricingCard = ({
     title,
@@ -120,7 +114,7 @@ export const Pricing = () => {
                 name: 'bhasha',
                 description: `${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} Premium Subscription`,
                 order_id: orderId,
-                handler: async (response: any) => {
+                handler: async (response: RazorpayResponseLike) => {
                     try {
                         // Verify payment on backend
                         const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/payment/verify`, {
@@ -139,9 +133,9 @@ export const Pricing = () => {
                         } else {
                             alert("❌ Payment verification failed. Please contact support.");
                         }
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.error("Verification error:", error);
-                        alert("❌ Payment verification failed: " + (error.response?.data?.detail || error.message));
+                        alert("❌ Payment verification failed: " + (getApiErrorMessage(error, 'Payment verification failed')));
                     }
                 },
                 prefill: {
@@ -157,12 +151,15 @@ export const Pricing = () => {
                 }
             };
 
+            if (!window.Razorpay) {
+                throw new Error('Razorpay checkout is unavailable.');
+            }
             const razorpay = new window.Razorpay(options);
             razorpay.open();
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Razorpay error:", error);
-            alert(error.response?.data?.detail || "Failed to initiate payment. Please try again.");
+            alert(getApiErrorMessage(error, "Failed to initiate payment. Please try again."));
         } finally {
             setProcessingRazorpay(false);
         }
@@ -189,9 +186,9 @@ export const Pricing = () => {
                 alert("✅ Payment Verified! Welcome to Premium.");
                 navigate('/chat');
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            alert(error.response?.data?.detail || "Verification failed. Please try again.");
+            alert(getApiErrorMessage(error, "Verification failed. Please try again."));
         } finally {
             setVerifying(false);
         }

@@ -1,28 +1,6 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import axios from 'axios';
-
-interface User {
-    email: string;
-    username?: string;
-    is_verified: boolean;
-    id: string;
-    _id?: string;
-    isPremium?: boolean;
-    subscriptionPlan?: 'monthly' | 'yearly' | null;
-    role?: 'user' | 'admin';
-}
-
-interface AuthContextType {
-    user: User | null;
-    token: string | null;
-    // 1st nodejs login: (token: string) => void;
-    login: (token: string, user?: User) => void;
-    logout: () => void;
-    refreshUser: () => Promise<void>;
-    isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext, type User } from './auth-context';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // nodejs const [user, setUser] = useState<User | null>(null);
@@ -34,20 +12,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     const [user, setUser] = useState<User | null>(() => {
-        if (localStorage.getItem('authMode') === 'java') {
-            try {
-                const savedUser = localStorage.getItem('javaUser');
-                return savedUser ? JSON.parse(savedUser) as User : null;
-            } catch {
-                return null;
-            }
+        const savedToken = localStorage.getItem('token');
+        const savedAuthMode = localStorage.getItem('authMode');
+
+        if (!savedToken || savedAuthMode !== 'java') {
+            return null;
         }
-        return null;
+
+        try {
+            const savedUser = localStorage.getItem('javaUser');
+            return savedUser ? (JSON.parse(savedUser) as User) : null;
+        } catch {
+            return null;
+        }
     });
 
     const [token, setToken] = useState<string | null>(
         localStorage.getItem('token')
     );
+
+    // java
+    const logout = useCallback(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('authMode');
+        localStorage.removeItem('javaUser');
+
+        delete axios.defaults.headers.common['Authorization'];
+
+        setToken(null);
+        setUser(null);
+        setAuthMode('node');
+    }, []);
+
 
     const fetchUser = async () => {
         if (!token || authMode === 'java') return;
@@ -74,18 +70,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!token) {
             delete axios.defaults.headers.common['Authorization'];
-            setUser(null);
             return;
         }
 
         if (authMode === 'java') {
-            // Java token ko Node.js APIs par globally send nahi karna.
             delete axios.defaults.headers.common['Authorization'];
             return;
         }
 
-        void fetchUser();
-    }, [token, authMode]);
+        let active = true;
+
+        const loadUser = async () => {
+            try {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                const response = await axios.get(
+                    `${import.meta.env.VITE_API_URL || ''}/auth/me`
+                );
+
+                if (active) {
+                    setUser(response.data as User);
+                }
+            } catch (error) {
+                if (active) {
+                    console.error('Failed to fetch user:', error);
+                    logout();
+                }
+            }
+        };
+
+        void loadUser();
+
+        return () => {
+            active = false;
+        };
+    }, [token, authMode, logout]);
 
     // nodejs
     // const login = (newToken: string) => {
@@ -124,17 +143,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // };
 
     // java
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('authMode');
-        localStorage.removeItem('javaUser');
+    // const logout = () => {
+    //     localStorage.removeItem('token');
+    //     localStorage.removeItem('authMode');
+    //     localStorage.removeItem('javaUser');
 
-        delete axios.defaults.headers.common['Authorization'];
+    //     delete axios.defaults.headers.common['Authorization'];
 
-        setToken(null);
-        setUser(null);
-        setAuthMode('node');
-    };
+    //     setToken(null);
+    //     setUser(null);
+    //     setAuthMode('node');
+    // };
 
     // nodejs
     // const refreshUser = async () => {
@@ -175,10 +194,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};

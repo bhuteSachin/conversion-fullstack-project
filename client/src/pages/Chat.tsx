@@ -2,17 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { motion } from 'framer-motion';
 import { Send, Globe, Mic, MicOff, Phone, Video, MessageSquare, Paperclip, FileText, Music, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { ChatSidebar } from '../components/ChatSidebar';
 import { VideoCall } from '../components/VideoCall';
 import axios from 'axios';
-
-declare global {
-    interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
-    }
-}
 
 const SOCKET_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '' : 'http://localhost:5000');
 
@@ -41,6 +34,8 @@ interface User {
     isPremium?: boolean;
 }
 
+type IncomingCallUser = Pick<User, '_id' | 'username'>;
+
 export const Chat = () => {
     const { user, token } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -60,11 +55,11 @@ export const Chat = () => {
 
     // Video Call State
     const [isVideoCallActive, setIsVideoCallActive] = useState(false);
-    const [incomingCallSignal, setIncomingCallSignal] = useState<any>(null);
-    const [incomingCallFrom, setIncomingCallFrom] = useState<any>(null);
+    const [incomingCallSignal, setIncomingCallSignal] = useState<RTCSessionDescriptionInit | null>(null);
+    const [incomingCallFrom, setIncomingCallFrom] = useState<IncomingCallUser | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const recognitionRef = useRef<any>(null);
+    const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
     const languages = [
         { code: 'en', name: 'English', voice: 'en-US' },
@@ -205,7 +200,7 @@ export const Chat = () => {
             if (isCallMode) recognition.start();
             else setIsListening(false);
         };
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event) => {
             const transcript = event.results[event.results.length - 1][0].transcript;
             if (isCallMode) {
                 if (transcript.trim() && socket) {
@@ -373,10 +368,10 @@ export const Chat = () => {
                     socket={socket}
                     room={room}
                     user={user}
-                    friend={incomingCallFrom || selectedFriend}
+                    friend={incomingCallFrom ?? selectedFriend!}
                     onEndCall={endVideoCall}
                     isIncoming={!!incomingCallSignal}
-                    incomingSignal={incomingCallSignal}
+                    incomingSignal={incomingCallSignal ?? undefined}
                 />
             )}
 
@@ -434,13 +429,14 @@ export const Chat = () => {
                                             setIsCallMode(true);
                                             setTimeout(() => {
                                                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                                                if (!SpeechRecognition) return;
                                                 const recognition = new SpeechRecognition();
                                                 recognition.lang = inputLang === 'hi' ? 'hi-IN' : inputLang === 'mr' ? 'mr-IN' : 'en-US';
                                                 recognition.continuous = true;
                                                 recognition.interimResults = false;
                                                 recognition.onstart = () => setIsListening(true);
-                                                recognition.onend = () => { if (true) recognition.start(); };
-                                                recognition.onresult = (event: any) => {
+                                                recognition.onend = () => recognition.start();
+                                                recognition.onresult = (event) => {
                                                     const transcript = event.results[event.results.length - 1][0].transcript;
                                                     if (transcript.trim() && socket) {
                                                         const messageData = {

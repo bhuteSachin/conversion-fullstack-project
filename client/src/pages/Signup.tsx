@@ -219,7 +219,7 @@ import { Loader2, CheckCircle, User, Lock, Mail } from 'lucide-react';
 import axios from 'axios';
 
 const JAVA_API_URL =
-    import.meta.env.VITE_JAVA_API_URL || 'http://localhost:8080';
+    import.meta.env.VITE_JAVA_API_URL || '';
 
 export const Signup = () => {
     const [email, setEmail] = useState('');
@@ -250,7 +250,7 @@ export const Signup = () => {
 
         try {
             const response = await axios.post(
-                `${JAVA_API_URL} /api/auth / signup`,
+                `${JAVA_API_URL}/api/auth/signup`,
                 {
                     email: email.trim(),
                     password,
@@ -275,7 +275,7 @@ export const Signup = () => {
                     );
                 } else if (!err.response) {
                     setError(
-                        'Cannot connect to Java server. Check that it is running on port 8080.'
+                        'Cannot connect to Java server. Check that it is running on port 8085.'
                     );
                 } else {
                     setError(

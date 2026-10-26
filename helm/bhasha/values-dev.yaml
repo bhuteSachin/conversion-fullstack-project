@@ -1,0 +1,10 @@
+frontend:
+  replicaCount: 1
+  image:
+    pullPolicy: Always
+backend:
+  replicaCount: 1
+  image:
+    pullPolicy: Always
+ingress:
+  enabled: false

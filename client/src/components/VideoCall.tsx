@@ -5,11 +5,11 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff, X } from 'lucide-react';
 interface VideoCallProps {
     socket: Socket;
     room: string;
-    user: any;
-    friend: any;
+    user: { id?: string; _id?: string; username?: string };
+    friend: { _id: string; username?: string };
     onEndCall: () => void;
     isIncoming?: boolean;
-    incomingSignal?: any;
+    incomingSignal?: RTCSessionDescriptionInit;
 }
 
 // Optimized ICE servers configuration for better connectivity and speed
@@ -25,7 +25,7 @@ const ICE_SERVERS = {
     iceCandidatePoolSize: 10 // Pre-fetch ICE candidates for faster connection
 };
 
-export const VideoCall: React.FC<VideoCallProps> = ({ socket, room: _room, user, friend, onEndCall, isIncoming, incomingSignal }) => {
+export const VideoCall: React.FC<VideoCallProps> = ({ socket, user, friend, onEndCall, isIncoming, incomingSignal }) => {
     console.log("VideoCall rendering. User:", user?.id, "Friend:", friend?._id, "Incoming:", isIncoming);
 
     const [callAccepted, setCallAccepted] = useState(false);
@@ -187,12 +187,13 @@ export const VideoCall: React.FC<VideoCallProps> = ({ socket, room: _room, user,
     useEffect(() => {
         console.log('VideoCall mounted');
         isMounted.current = true;
-        if (!isIncoming) {
-            startCall();
-        }
+        const startup = window.setTimeout(() => {
+            if (!isIncoming) void startCall();
+        }, 0);
 
         return () => {
             console.log('VideoCall unmounting');
+            window.clearTimeout(startup);
             isMounted.current = false;
             cleanup(streamRef.current);
         };
@@ -269,6 +270,9 @@ export const VideoCall: React.FC<VideoCallProps> = ({ socket, room: _room, user,
                 }
             });
 
+            if (!incomingSignal) {
+                throw new Error('Incoming call signal is missing.');
+            }
             await peer.setRemoteDescription(new RTCSessionDescription(incomingSignal));
             const answer = await peer.createAnswer();
             await peer.setLocalDescription(answer);

@@ -1,0 +1,44 @@
+nameOverride: ""
+fullnameOverride: ""
+frontend:
+  replicaCount: 2
+  image:
+    repository: bhasha/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+backend:
+  replicaCount: 2
+  image:
+    repository: bhasha/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 8085
+  appSecretName: bhasha-app-secrets
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+ingress:
+  enabled: false
+  className: alb
+  host: app.example.com
+  certificateArn: ""
+  scheme: internet-facing
+  targetType: ip
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { LogOut, MessageSquare, Crown, Languages, Menu, X, ShieldAlert, Bot } from 'lucide-react';
 
 const ADMIN_EMAIL = 'shubhamgayke9168@gmail.com';

@@ -1,15 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mic, MicOff, Volume2, VolumeX, Globe, Bot, User, Loader2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import axios from 'axios';
-
-declare global {
-    interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
-    }
-}
 
 interface Message {
     id: string;
@@ -44,7 +37,7 @@ export const AIPractice = () => {
     const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const recognitionRef = useRef<any>(null);
+    const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
     // Scroll to bottom when messages change
     useEffect(() => {
@@ -148,14 +141,14 @@ export const AIPractice = () => {
         recognition.onstart = () => setIsListening(true);
         recognition.onend = () => setIsListening(false);
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             if (transcript.trim()) {
                 sendMessage(transcript);
             }
         };
 
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event) => {
             console.error('Speech recognition error:', event.error);
             setIsListening(false);
         };

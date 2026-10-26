@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -46,16 +47,9 @@ import { Navbar } from './components/Navbar';
 import { BackButton } from './components/BackButton';
 
 function AppContent() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulate initial loading for "Server Waking Up"
-  useEffect(() => {
-    // Check if we've already shown the loading screen this session
-    const hasLoaded = sessionStorage.getItem('hasLoaded');
-    if (hasLoaded) {
-      setIsLoading(false);
-    }
-  }, []);
+  const [isLoading, setIsLoading] = useState(
+    () => sessionStorage.getItem('hasLoaded') !== 'true'
+  );
 
   const handleLoadingComplete = () => {
     setIsLoading(false);

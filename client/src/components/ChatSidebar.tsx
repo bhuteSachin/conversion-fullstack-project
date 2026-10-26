@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Users, Bell, Check, X } from 'lucide-react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { Socket } from 'socket.io-client';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface User {
     _id: string;
@@ -110,8 +111,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectUser, selected
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Friend request sent!');
-        } catch (err: any) {
-            alert(err.response?.data?.detail || 'Failed to send request');
+        } catch (err: unknown) {
+            alert(getApiErrorMessage(err, 'Failed to send request'));
         }
     };
 

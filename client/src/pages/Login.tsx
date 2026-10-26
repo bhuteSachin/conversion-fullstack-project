@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
 const JAVA_API_URL =
-    import.meta.env.VITE_JAVA_API_URL || 'http://localhost:8080';
+    import.meta.env.VITE_JAVA_API_URL || '';
 
 export const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -69,7 +69,7 @@ export const Login = () => {
                     setError('Invalid email or password.');
                 } else if (!err.response) {
                     setError(
-                        'Cannot connect to Java server. Please check that it is running on port 8080.'
+                        'Cannot connect to Java server. Please check that it is running on port 8085.'
                     );
                 } else {
                     setError(

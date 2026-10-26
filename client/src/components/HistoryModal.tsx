@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ArrowRight, Bookmark } from 'lucide-react';
 
-interface HistoryItem {
+export interface HistoryItem {
     _id: string;
     source_lang: string;
     target_lang: string;

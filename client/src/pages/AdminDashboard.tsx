@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { Check, X, Loader2, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +15,14 @@ interface Payment {
     createdAt: string;
 }
 
+interface AdminUser {
+    _id: string;
+    email: string;
+    username: string;
+    isBanned?: boolean;
+    subscriptionPlan?: string | null;
+}
+
 export const AdminDashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -22,7 +30,7 @@ export const AdminDashboard = () => {
 
     // Data States
     const [payments, setPayments] = useState<Payment[]>([]);
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<AdminUser[]>([]);
     const [pricing, setPricing] = useState({
         monthly_price: 199,
         yearly_price: 799,
@@ -70,7 +78,7 @@ export const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/payment/admin/${action}`, { paymentId });
             setPayments(prev => prev.filter(p => p._id !== paymentId));
             alert(`Payment ${action}d successfully`);
-        } catch (error) {
+        } catch {
             alert("Action failed");
         } finally {
             setActionLoading(null);
@@ -84,7 +92,7 @@ export const AdminDashboard = () => {
         try {
             const res = await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/admin/users/${userId}/ban`);
             setUsers(prev => prev.map(u => u._id === userId ? { ...u, isBanned: res.data.isBanned } : u));
-        } catch (error) {
+        } catch {
             alert("Failed to ban user");
         } finally {
             setActionLoading(null);
@@ -97,7 +105,7 @@ export const AdminDashboard = () => {
         try {
             await axios.delete(`${import.meta.env.VITE_API_URL || ''}/api/admin/users/${userId}`);
             setUsers(prev => prev.filter(u => u._id !== userId));
-        } catch (error) {
+        } catch {
             alert("Failed to delete user");
         } finally {
             setActionLoading(null);
@@ -111,7 +119,7 @@ export const AdminDashboard = () => {
         try {
             await axios.post(`${import.meta.env.VITE_API_URL || ''}/api/admin/settings`, { settings: pricing });
             alert("Pricing updated successfully!");
-        } catch (error) {
+        } catch {
             alert("Failed to update pricing");
         } finally {
             setActionLoading(null);
@@ -135,10 +143,10 @@ export const AdminDashboard = () => {
 
                     {/* Tabs */}
                     <div className="flex gap-4 mb-8 border-b border-white/10 pb-4">
-                        {['payments', 'users', 'pricing'].map((tab) => (
+                        {(['payments', 'users', 'pricing'] as const).map((tab) => (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(tab as any)}
+                                onClick={() => setActiveTab(tab)}
                                 className={`px-4 py-2 rounded-lg capitalize font-medium transition-all ${activeTab === tab
                                     ? 'bg-primary-600 text-white'
                                     : 'text-dark-muted hover:text-white hover:bg-white/5'

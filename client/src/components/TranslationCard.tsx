@@ -4,7 +4,8 @@ import { ArrowRightLeft, Sparkles, Copy, Loader2, Mic, MicOff, Volume2, Upload, 
 import { jsPDF } from "jspdf";
 import { LanguageSelector } from './LanguageSelector';
 import { HistoryModal } from './HistoryModal';
-import { useAuth } from '../context/AuthContext';
+import type { HistoryItem } from './HistoryModal';
+import { useAuth } from '../context/useAuth';
 import { Link } from 'react-router-dom';
 import Sanscript from "@indic-transliteration/sanscript";
 
@@ -23,14 +24,6 @@ const DIALECTS = [
     "Pure/Shuddh"
 ];
 
-// Add type definition for Web Speech API
-declare global {
-    interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
-    }
-}
-
 export const TranslationCard = () => {
     const { user, isAuthenticated } = useAuth();
     const [sourceLang, setSourceLang] = useState('en');
@@ -42,11 +35,11 @@ export const TranslationCard = () => {
     const [isListening, setIsListening] = useState(false);
     const [activeTab, setActiveTab] = useState<'text' | 'document'>('text');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const recognitionRef = useRef<any>(null);
+    const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
     // History State
     const [showHistory, setShowHistory] = useState(false);
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<HistoryItem[]>([]);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
     useEffect(() => {
@@ -145,19 +138,20 @@ export const TranslationCard = () => {
     }, []);
 
     useEffect(() => {
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = false;
-            recognitionRef.current.interimResults = false;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognitionRef.current = recognition;
+            recognition.continuous = false;
+            recognition.interimResults = false;
 
-            recognitionRef.current.onresult = (event: any) => {
+            recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
                 setInputText((prev) => prev + (prev ? " " : "") + transcript);
                 setIsListening(false);
             };
 
-            recognitionRef.current.onerror = (event: any) => {
+            recognition.onerror = (event) => {
                 console.error('Speech recognition error', event.error);
                 setIsListening(false);
             };

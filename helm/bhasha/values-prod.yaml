@@ -1,0 +1,13 @@
+frontend:
+  replicaCount: 2
+  image:
+    pullPolicy: IfNotPresent
+backend:
+  replicaCount: 2
+  image:
+    pullPolicy: IfNotPresent
+ingress:
+  enabled: true
+  className: alb
+  host: app.example.com
+  certificateArn: ""

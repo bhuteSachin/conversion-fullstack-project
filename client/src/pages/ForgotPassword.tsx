@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, ArrowRight, CheckCircle, KeyRound, Mail } from 'lucide-react';
 import axios from 'axios';
+import { getApiErrorMessage } from '../utils/apiError';
 
 export const ForgotPassword = () => {
     const [step, setStep] = useState<'email' | 'reset'>('email');
@@ -24,8 +25,8 @@ export const ForgotPassword = () => {
             await axios.post(`${import.meta.env.VITE_API_URL || ''}/auth/forgot-password`, { email });
             setStep('reset');
             setSuccessMessage('OTP sent to your email');
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to send OTP');
+        } catch (err: unknown) {
+            setError(getApiErrorMessage(err, 'Failed to send OTP'));
         } finally {
             setIsLoading(false);
         }
@@ -44,8 +45,8 @@ export const ForgotPassword = () => {
             });
             setSuccessMessage('Password reset successfully! Redirecting...');
             setTimeout(() => navigate('/login'), 2000);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to reset password');
+        } catch (err: unknown) {
+            setError(getApiErrorMessage(err, 'Failed to reset password'));
         } finally {
             setIsLoading(false);
         }
